@@ -10,63 +10,53 @@ namespace DurableEntitiesItemTracker
 {
     public class TestOrchestrator
     {
-        [FunctionName("MyFunction")]
-        public static async Task EntryPoint(
+        const string TestOrderItemId = "Order123";
+        const int TestOrderItemQuantity = 1;
+        const string TestTrackerId = "yz";
+
+        [FunctionName("CreateOrderItemEntryPoint")]
+        public static async Task CreateOrderItemEntryPoint(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
             [DurableClient] IDurableOrchestrationClient orchestrationClient)
         {
-            await orchestrationClient.StartNewAsync("Test");
+            await orchestrationClient.StartNewAsync(nameof(CreateOrderItemOrchestrator));
         }
 
-        [FunctionName("Test")]
-        public static async Task Run(
+        [FunctionName("CreateOrderItemOrchestrator")]
+        public static async Task CreateOrderItemOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            var trackerId = "xxyzzz";
-            var trackedItemId = "order1234-4";
-
-            var success = await AssignTrackerToTrackedItem(trackerId, trackedItemId, context);
-            if (success)
-            {
-                if (!context.IsReplaying) log.LogInformation("Succeeded!");
-            }
-            else
-            {
-                if (!context.IsReplaying) log.LogInformation("Failed");
-            }
+            await CreateOrderItem(TestOrderItemId, TestOrderItemQuantity, context);
         }
 
-        private static async Task<bool> AssignTrackerToTrackedItem(
-            string trackerId, string trackedItemId,
+        private static Task CreateOrderItem(
+            string orderItemId, int quantity,
             IDurableOrchestrationContext context)
         {
-            var trackerEntityId = new EntityId(nameof(Tracker), trackerId);
-            var trackedItemEntityId = new EntityId(nameof(TrackedItem), trackedItemId);
+            var orderItemEntityId = new EntityId(nameof(OrderItem), orderItemId);
 
-            using (await context.LockAsync(trackerEntityId, trackedItemEntityId))
-            {
-                var trackerProxy = context.CreateEntityProxy<ITracker>(trackerEntityId);
-                var trackedItemProxy = context.CreateEntityProxy<ITrackedItem>(trackedItemEntityId);
+            var orderItemProxy = context.CreateEntityProxy<IOrderItem>(orderItemEntityId);
+            orderItemProxy.SetQuantity(quantity);
+            return Task.CompletedTask;
+        }
 
-                var currentTrackerItemId = await trackerProxy.GetTrackedItemId();
-                if (currentTrackerItemId != null)
-                {
-                    // we can't complete the assignment - the tracker is already in use
-                    return false;
-                }
+        // ------
 
-                var currentTrackedItemTrackerId = await trackedItemProxy.GetTrackerId();
-                if (currentTrackedItemTrackerId != null)
-                {
-                    // we can't complete the assignment - the item already has a tracker
-                    return false;
-                }
+        [FunctionName("ApplyConfigurationEntryPoint")]
+        public static async Task ApplyConfigurationEntryPoint(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
+            [DurableClient] IDurableOrchestrationClient orchestrationClient)
+        {
+            await orchestrationClient.StartNewAsync(nameof(ApplyTrackingConfigurationOrchestrator));
+        }
 
-                await trackerProxy.SetTrackedItemId(trackedItemId);
-                await trackedItemProxy.SetTrackerId(trackerId);
-                return true;
-            }
+        [FunctionName("ApplyTrackingConfigurationOrchestrator")]
+        public static async Task ApplyTrackingConfigurationOrchestrator(
+            [OrchestrationTrigger] IDurableOrchestrationContext context,
+            ILogger log)
+        {
+            await OrchestrationFunctions.ApplyTrackingConfiguration(TestOrderItemId, TestTrackerId, context);
         }
     }
 }
