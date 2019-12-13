@@ -38,7 +38,7 @@ namespace DurableEntitiesItemTracker
 
                 // Update the order item so that it knows a slot has been reserved for this order item.
                 var trackedItemId = $"{orderItemId}-{currentTrackedItemCount + 1}";
-                await orderItemProxy.AddTrackedItem(trackedItemId); // TODO doesn't work within a lock? Can't signal.
+                await orderItemProxy.AddTrackedItem(trackedItemId);
 
                 return trackedItemId;
             }

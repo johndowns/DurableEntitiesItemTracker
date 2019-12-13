@@ -14,14 +14,16 @@ namespace DurableEntitiesItemTracker.Entities
 
         Task SetTrackerId(string trackerId);
 
-        void SetLocation(TrackerLocation location);
+        Task SetLocation(TrackerLocation location);
     }
 
+    [JsonObject(MemberSerialization.OptIn)]
     public class TrackedItem : ITrackedItem
     {
         [JsonProperty("trackerId")]
         public string TrackerId { get; set; }
 
+        [JsonProperty("location
         public TrackerLocation Location { get; set; }
 
         [FunctionName(nameof(TrackedItem))]
@@ -32,9 +34,9 @@ namespace DurableEntitiesItemTracker.Entities
 
         public Task SetTrackerId(string trackerId)
         {
+            // Check if there is already a tracker associated with this TrackedItem.
             if (this.TrackerId != null)
             {
-                // There is already a tracker associated with this TrackedItem.
                 Debug.Assert(false); // This scenario shouldn't happen if we are going through our UpdateTrackerConfiguration orchestrator.
                 throw new InvalidOperationException();
             }
@@ -43,11 +45,6 @@ namespace DurableEntitiesItemTracker.Entities
             return Task.CompletedTask;
         }
 
-        public void SetLocation(TrackerLocation location)
-        {
-            this.Location = location;
-
-            // We would probably do our geofencing checks in here.
-        }
+        public Task SetLocation(TrackerLocation location) => Task.FromResult(this.Location = location); // You might perform any geofencing checks in here.
     }
 }

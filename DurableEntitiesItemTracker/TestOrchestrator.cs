@@ -40,9 +40,7 @@ namespace DurableEntitiesItemTracker
             orderItemProxy.SetQuantity(quantity);
             return Task.CompletedTask;
         }
-
-        // ------
-
+        
         [FunctionName("ApplyConfigurationEntryPoint")]
         public static async Task ApplyConfigurationEntryPoint(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
@@ -56,7 +54,7 @@ namespace DurableEntitiesItemTracker
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            await OrchestrationFunctions.ApplyTrackingConfiguration(TestOrderItemId, TestTrackerId, context);
+            await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(TestOrderItemId, TestTrackerId, context);
         }
     }
 }

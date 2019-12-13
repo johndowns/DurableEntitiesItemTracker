@@ -23,12 +23,12 @@ namespace DurableEntitiesItemTracker.Entities
         [JsonProperty("trackedItems")]
         private HashSet<string> TrackedItems { get; set; } = new HashSet<string>();
 
+        [JsonProperty("quantity")]
+        public int Quantity { get; set; }
+
         [FunctionName(nameof(OrderItem))]
         public static Task Run([EntityTrigger] IDurableEntityContext ctx)
             => ctx.DispatchAsync<OrderItem>();
-
-        [JsonProperty("quantity")]
-        public int Quantity { get; set; }
 
         public Task<int> GetQuantity() => Task.FromResult(this.Quantity);
 
