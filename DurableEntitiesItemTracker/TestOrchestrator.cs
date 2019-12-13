@@ -1,6 +1,4 @@
-﻿using DurableEntitiesItemTracker.Entities;
-using Dynamitey.DynamicObjects;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -141,7 +139,6 @@ namespace DurableEntitiesItemTracker
         #endregion
 
         #region Scenario 4: Add multiple trackers simultaneously
-        // TODO
         // This scenario creates an order with a quantity of 1, and then attempts to assign multiple trackers.
         // Only one of these attempts succeeds due to the locking behaviour of the durable entities.
         // To invoke this, issue a GET to http://localhost:7071/api/Scenario4
@@ -166,62 +163,35 @@ namespace DurableEntitiesItemTracker
             if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItemId} now exists, and has a quantity of {quantity}.");
 
             // Send multiple simultaneous attempts to add a tracker to the order item.
-            var assignmentAttempts = 3;
+            var assignmentAttempts = 10;
             var trackerAssignmentTasks = new List<Task>();
             for (int i = 0; i < assignmentAttempts; i++)
             {
                 trackerAssignmentTasks.Add(TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItemId, $"Scenario4Tracker-{context.NewGuid().ToString()}-{i}", context));
             }
-            var x = await Task.WhenAll(trackerAssignmentTasks.Select(task => WrapResultOrException(task)));
+            await Task.WhenAll(trackerAssignmentTasks.Select(task => IgnoreTaskException(task)));
 
             // Check how many succeeded and failed.
-            var successfulAttempts = trackerAssignmentTasks.Count(t => ! t.IsFaulted);
+            var successfulAttempts = trackerAssignmentTasks.Count(t => t.IsCompletedSuccessfully);
             var failedAttempts = trackerAssignmentTasks.Count(t => t.IsFaulted);
 
             if (!context.IsReplaying) log.LogInformation($"Out of {assignmentAttempts} attempts to place a tracker on the order item, {successfulAttempts} succeeded and {failedAttempts} failed.");
         }
         #endregion
 
-        private static async Task<TaskSucceededOrFailed> WrapResultOrException(Task task)
+        #region Helpers
+        private static async Task IgnoreTaskException(Task task)
         {
             try
             {
                 await task;
-                return new TaskSucceededOrFailed(true);
+                return;
             }
-            catch (Exception ex)
+            catch
             {
-                return new TaskSucceededOrFailed(false);
+                return;
             }
         }
-
-        public class TaskSucceededOrFailed
-        {
-            public TaskSucceededOrFailed(bool isSuccess)
-            {
-                IsSuccess = isSuccess;
-            }
-
-            public bool IsSuccess { get; }
-        }
-
-        public class ResultOrException<T>
-        {
-            public ResultOrException(T result)
-            {
-                IsSuccess = true;
-                Result = result;
-            }
-
-            public ResultOrException(Exception ex)
-            {
-                IsSuccess = false;
-                Exception = ex;
-            }
-
-            public bool IsSuccess { get; }
-            public T Result { get; }
-            public Exception Exception { get; }
-        }
+        #endregion
     }
 }
