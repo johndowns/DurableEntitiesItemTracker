@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DurableEntitiesItemTracker
 {
-    public class TestOrchestrator
+    public class SampleScenarios
     {
         #region Scenario 1: Happy path
         // This scenario creates an order item with a quantity of 2, then sets up two tracked items with trackers.
@@ -31,17 +31,17 @@ namespace DurableEntitiesItemTracker
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            var orderItemId = $"Scenario1TestOrder{context.NewGuid().ToString()}";
+            var orderId = $"Scenario1TestOrder-{context.NewGuid().ToString()}";
             var quantity = 2;
             var trackerIds = new[] { $"Scenario1Tracker-{context.NewGuid().ToString()}-1", $"Scenario1Tracker-{context.NewGuid().ToString()}-2" };
 
-            await TrackingOrchestrationFunctions.CreateOrderItem(orderItemId, quantity, context);
-            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItemId} now exists, and has a quantity of {quantity}.");
+            await TrackingOrchestrationFunctions.CreateOrder(orderId, quantity, context);
+            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderId} now exists, and has a quantity of {quantity}.");
 
             foreach (var trackerId in trackerIds)
             {
-                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItemId, trackerId, context);
-                if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {trackerId} with one of the tracked items in order {orderItemId}.");
+                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderId, trackerId, context);
+                if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {trackerId} with one of the tracked items in order {orderId}.");
             }
         }
         #endregion
@@ -64,25 +64,25 @@ namespace DurableEntitiesItemTracker
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            var orderItem1Id = $"Scenario2TestOrder-{context.NewGuid().ToString()}";
-            var orderItem2Id = $"Scenario2TestOrder-{context.NewGuid().ToString()}";
+            var order1Id = $"Scenario2TestOrder-{context.NewGuid().ToString()}";
+            var order2Id = $"Scenario2TestOrder-{context.NewGuid().ToString()}";
             var quantity = 2;
             var trackerId = $"Scenario2Tracker-{context.NewGuid().ToString()}";
 
-            await TrackingOrchestrationFunctions.CreateOrderItem(orderItem1Id, quantity, context);
-            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItem1Id} now exists, and has a quantity of {quantity}.");
+            await TrackingOrchestrationFunctions.CreateOrder(order1Id, quantity, context);
+            if (!context.IsReplaying) log.LogInformation($"Order item entity {order1Id} now exists, and has a quantity of {quantity}.");
 
-            await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItem1Id, trackerId, context);
-            if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {trackerId} with one of the tracked items in order {orderItem1Id}.");
+            await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(order1Id, trackerId, context);
+            if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {trackerId} with one of the tracked items in order {order1Id}.");
 
-            await TrackingOrchestrationFunctions.CreateOrderItem(orderItem2Id, quantity, context);
-            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItem2Id} now exists, and has a quantity of {quantity}.");
+            await TrackingOrchestrationFunctions.CreateOrder(order2Id, quantity, context);
+            if (!context.IsReplaying) log.LogInformation($"Order item entity {order2Id} now exists, and has a quantity of {quantity}.");
 
             try
             {
-                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItem2Id, trackerId, context);
+                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(order2Id, trackerId, context);
 
-                // The above call should fail, since the tracker is already associated with orderItem1Id.
+                // The above call should fail, since the tracker is already associated with order1Id.
                 Debug.Assert(false);
             }
             catch (InvalidOperationException ex)
@@ -110,23 +110,23 @@ namespace DurableEntitiesItemTracker
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            var orderItemId = $"Scenario3TestOrder{context.NewGuid().ToString()}";
+            var orderId = $"Scenario3TestOrder-{context.NewGuid().ToString()}";
             var quantity = 2;
             var trackerIds = new[] { $"Scenario3Tracker-{context.NewGuid().ToString()}-1", $"Scenario3Tracker-{context.NewGuid().ToString()}-2" };
 
-            await TrackingOrchestrationFunctions.CreateOrderItem(orderItemId, quantity, context);
-            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItemId} now exists, and has a quantity of {quantity}.");
+            await TrackingOrchestrationFunctions.CreateOrder(orderId, quantity, context);
+            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderId} now exists, and has a quantity of {quantity}.");
 
             foreach (var trackerId in trackerIds)
             {
-                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItemId, trackerId, context);
-                if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {trackerId} with one of the tracked items in order {orderItemId}.");
+                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderId, trackerId, context);
+                if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {trackerId} with one of the tracked items in order {orderId}.");
             }
 
             try
             {
                 var anotherTrackerId = $"Scenario3Tracker-{context.NewGuid().ToString()}-3";
-                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItemId, anotherTrackerId, context);
+                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderId, anotherTrackerId, context);
 
                 // The above call should fail, since the order already has the maximum number of trackers.
                 Debug.Assert(false);
@@ -156,18 +156,18 @@ namespace DurableEntitiesItemTracker
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            var orderItemId = $"Scenario4TestOrder-{context.NewGuid().ToString()}";
+            var orderId = $"Scenario4TestOrder-{context.NewGuid().ToString()}";
             var quantity = 1;
 
-            await TrackingOrchestrationFunctions.CreateOrderItem(orderItemId, quantity, context);
-            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItemId} now exists, and has a quantity of {quantity}.");
+            await TrackingOrchestrationFunctions.CreateOrder(orderId, quantity, context);
+            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderId} now exists, and has a quantity of {quantity}.");
 
             // Send multiple simultaneous attempts to add a tracker to the order item.
             var assignmentAttempts = 10;
             var trackerAssignmentTasks = new List<Task>();
             for (int i = 0; i < assignmentAttempts; i++)
             {
-                trackerAssignmentTasks.Add(TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItemId, $"Scenario4Tracker-{context.NewGuid().ToString()}-{i}", context));
+                trackerAssignmentTasks.Add(TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderId, $"Scenario4Tracker-{context.NewGuid().ToString()}-{i}", context));
             }
             await Task.WhenAll(trackerAssignmentTasks.Select(task => IgnoreTaskException(task)));
 

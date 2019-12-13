@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DurableEntitiesItemTracker.Entities
 {
-    public interface IOrderItem
+    public interface IOrder
     {
         Task<int?> GetQuantity();
 
@@ -18,7 +18,7 @@ namespace DurableEntitiesItemTracker.Entities
     }
 
     [JsonObject(MemberSerialization.OptIn)]
-    public class OrderItem : IOrderItem
+    public class Order : IOrder
     {
         [JsonProperty("trackedItems")]
         private HashSet<string> TrackedItems { get; set; } = new HashSet<string>();
@@ -26,9 +26,9 @@ namespace DurableEntitiesItemTracker.Entities
         [JsonProperty("quantity")]
         public int? Quantity { get; set; }
 
-        [FunctionName(nameof(OrderItem))]
+        [FunctionName(nameof(Order))]
         public static Task Run([EntityTrigger] IDurableEntityContext ctx)
-            => ctx.DispatchAsync<OrderItem>();
+            => ctx.DispatchAsync<Order>();
 
         public Task<int?> GetQuantity() => Task.FromResult(this.Quantity);
 

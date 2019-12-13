@@ -7,48 +7,48 @@ namespace DurableEntitiesItemTracker
 {
     public static class TrackingOrchestrationFunctions
     {
-        public static async Task CreateOrderItem(
-            string orderItemId, int quantity,
+        public static async Task CreateOrder(
+            string orderId, int quantity,
             IDurableOrchestrationContext context)
         {
-            var orderItemEntityId = new EntityId(nameof(OrderItem), orderItemId);
+            var orderEntityId = new EntityId(nameof(Order), orderId);
 
-            var orderItemProxy = context.CreateEntityProxy<IOrderItem>(orderItemEntityId);
-            await orderItemProxy.SetQuantity(quantity);
+            var orderProxy = context.CreateEntityProxy<IOrder>(orderEntityId);
+            await orderProxy.SetQuantity(quantity);
         }
 
         public static async Task ApplyTrackingConfiguration(
-            string orderItemId, string trackerId,
+            string orderId, string trackerId,
             IDurableOrchestrationContext context)
         {
             // You may want to call out to other activity functions to do more validation logic here.
 
-            var trackedItemId = await CreateTrackedItemForOrderItem(orderItemId, context);
+            var trackedItemId = await CreateTrackedItemForOrder(orderId, context);
             await AssignTrackerToTrackedItem(trackerId, trackedItemId, context);
         }
 
-        private static async Task<string> CreateTrackedItemForOrderItem(
-            string orderItemId,
+        private static async Task<string> CreateTrackedItemForOrder(
+            string orderId,
             IDurableOrchestrationContext context)
         {
-            var orderItemEntityId = new EntityId(nameof(OrderItem), orderItemId);
+            var orderEntityId = new EntityId(nameof(Order), orderId);
 
-            // Ensure that we have exclusive access to the OrderItem.
-            using (await context.LockAsync(orderItemEntityId))
+            // Ensure that we have exclusive access to the order.
+            using (await context.LockAsync(orderEntityId))
             {
-                var orderItemProxy = context.CreateEntityProxy<IOrderItem>(orderItemEntityId);
+                var orderProxy = context.CreateEntityProxy<IOrder>(orderEntityId);
 
                 // Confirm that we haven't already used all of the slots for tracked items within this order item.
-                var orderItemQuantity = await orderItemProxy.GetQuantity();
-                var currentTrackedItemCount = await orderItemProxy.GetTrackedItemCount();
-                if (currentTrackedItemCount >= orderItemQuantity)
+                var orderQuantity = await orderProxy.GetQuantity();
+                var currentTrackedItemCount = await orderProxy.GetTrackedItemCount();
+                if (currentTrackedItemCount >= orderQuantity)
                 {
                     throw new InvalidOperationException("This order item has reached its maximum number of tracked items.");
                 }
 
                 // Update the order item so that it knows a slot has been reserved for this order item.
-                var trackedItemId = $"{orderItemId}-{currentTrackedItemCount + 1}";
-                await orderItemProxy.AddTrackedItem(trackedItemId);
+                var trackedItemId = $"{orderId}-{currentTrackedItemCount + 1}";
+                await orderProxy.AddTrackedItem(trackedItemId);
 
                 return trackedItemId;
             }
