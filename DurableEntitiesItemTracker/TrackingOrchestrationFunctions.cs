@@ -7,6 +7,16 @@ namespace DurableEntitiesItemTracker
 {
     public static class TrackingOrchestrationFunctions
     {
+        public static async Task CreateOrderItem(
+            string orderItemId, int quantity,
+            IDurableOrchestrationContext context)
+        {
+            var orderItemEntityId = new EntityId(nameof(OrderItem), orderItemId);
+
+            var orderItemProxy = context.CreateEntityProxy<IOrderItem>(orderItemEntityId);
+            await orderItemProxy.SetQuantity(quantity);
+        }
+
         public static async Task ApplyTrackingConfiguration(
             string orderItemId, string trackerId,
             IDurableOrchestrationContext context)

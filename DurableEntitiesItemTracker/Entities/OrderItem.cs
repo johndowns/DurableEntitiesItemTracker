@@ -8,7 +8,7 @@ namespace DurableEntitiesItemTracker.Entities
 {
     public interface IOrderItem
     {
-        Task<int> GetQuantity();
+        Task<int?> GetQuantity();
 
         Task SetQuantity(int quantity);
 
@@ -24,13 +24,13 @@ namespace DurableEntitiesItemTracker.Entities
         private HashSet<string> TrackedItems { get; set; } = new HashSet<string>();
 
         [JsonProperty("quantity")]
-        public int Quantity { get; set; }
+        public int? Quantity { get; set; }
 
         [FunctionName(nameof(OrderItem))]
         public static Task Run([EntityTrigger] IDurableEntityContext ctx)
             => ctx.DispatchAsync<OrderItem>();
 
-        public Task<int> GetQuantity() => Task.FromResult(this.Quantity);
+        public Task<int?> GetQuantity() => Task.FromResult(this.Quantity);
 
         public Task SetQuantity(int quantity) => Task.FromResult(this.Quantity = quantity);
 

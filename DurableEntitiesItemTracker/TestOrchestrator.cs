@@ -1,5 +1,4 @@
-﻿using DurableEntitiesItemTracker.Entities;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -14,47 +13,33 @@ namespace DurableEntitiesItemTracker
         const int TestOrderItemQuantity = 1;
         const string TestTrackerId = "yz";
 
-        [FunctionName("CreateOrderItemEntryPoint")]
-        public static async Task CreateOrderItemEntryPoint(
+        [FunctionName("Scenario1")]
+        public static async Task Scenario1EntryPoint(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
             [DurableClient] IDurableOrchestrationClient orchestrationClient)
         {
-            await orchestrationClient.StartNewAsync(nameof(CreateOrderItemOrchestrator));
+            await orchestrationClient.StartNewAsync(nameof(Scenario1Orchestrator));
         }
 
-        [FunctionName("CreateOrderItemOrchestrator")]
-        public static async Task CreateOrderItemOrchestrator(
+        [FunctionName(nameof(Scenario1Orchestrator))]
+        public static async Task Scenario1Orchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            await CreateOrderItem(TestOrderItemId, TestOrderItemQuantity, context);
-        }
+            // This scenario creates an order item with a quantity of 2, then sets up two tracked items with trackers.
+            // This scenario should run successfully.
+            var orderItemId = $"Scenario1TestOrder{context.NewGuid().ToString()}";
+            var quantity = 2;
+            var trackers = new[] { "Scenario1Tracker1", "Scenario1Tracker2" };
 
-        private static Task CreateOrderItem(
-            string orderItemId, int quantity,
-            IDurableOrchestrationContext context)
-        {
-            var orderItemEntityId = new EntityId(nameof(OrderItem), orderItemId);
+            await TrackingOrchestrationFunctions.CreateOrderItem(orderItemId, quantity, context);
+            if (!context.IsReplaying) log.LogInformation($"Order item entity {orderItemId} now exists, and has a quantity of {quantity}.");
 
-            var orderItemProxy = context.CreateEntityProxy<IOrderItem>(orderItemEntityId);
-            orderItemProxy.SetQuantity(quantity);
-            return Task.CompletedTask;
-        }
-        
-        [FunctionName("ApplyConfigurationEntryPoint")]
-        public static async Task ApplyConfigurationEntryPoint(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
-            [DurableClient] IDurableOrchestrationClient orchestrationClient)
-        {
-            await orchestrationClient.StartNewAsync(nameof(ApplyTrackingConfigurationOrchestrator));
-        }
-
-        [FunctionName("ApplyTrackingConfigurationOrchestrator")]
-        public static async Task ApplyTrackingConfigurationOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context,
-            ILogger log)
-        {
-            await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(TestOrderItemId, TestTrackerId, context);
+            foreach (var tracker in trackers)
+            {
+                await TrackingOrchestrationFunctions.ApplyTrackingConfiguration(orderItemId, tracker, context);
+                if (!context.IsReplaying) log.LogInformation($"Successfully associated tracker {tracker} with one of the tracked items in order {orderItemId}.");
+            }
         }
     }
 }

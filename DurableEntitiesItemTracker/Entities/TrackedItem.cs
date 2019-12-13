@@ -23,7 +23,7 @@ namespace DurableEntitiesItemTracker.Entities
         [JsonProperty("trackerId")]
         public string TrackerId { get; set; }
 
-        [JsonProperty("location
+        [JsonProperty("location")]
         public TrackerLocation Location { get; set; }
 
         [FunctionName(nameof(TrackedItem))]
