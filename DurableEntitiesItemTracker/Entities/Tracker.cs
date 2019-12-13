@@ -17,8 +17,6 @@ namespace DurableEntitiesItemTracker.Entities
     [JsonObject(MemberSerialization.OptIn)]
     public class Tracker : ITracker
     {
-        private IDurableEntityContext context;
-
         [JsonProperty("location")]
         public TrackerLocation Location { get; set; }
 
@@ -28,17 +26,8 @@ namespace DurableEntitiesItemTracker.Entities
         public Task<string> GetTrackedItemId() => Task.FromResult(this.TrackedItemId);
 
         [FunctionName(nameof(Tracker))]
-        public static Task HandleEntityOperation([EntityTrigger] IDurableEntityContext context)
-        {
-            // we initialize the entity explicitly here (instead of relying on the implicit default constructor)
-            // so we can pass the context through for inter-entity signalling
-            return context.DispatchAsync<Tracker>(context);
-        }
-
-        public Tracker(IDurableEntityContext context)
-        {
-            this.context = context;
-        }
+        public static Task Run([EntityTrigger] IDurableEntityContext ctx)
+            => ctx.DispatchAsync<Tracker>();
 
         public void SetCurrentLocation(TrackerLocation location)
         {
@@ -55,7 +44,7 @@ namespace DurableEntitiesItemTracker.Entities
             if (TrackedItemId != null)
             {
                 // Signal the tracked item to let it know it's got a new location.
-                context.SignalEntity(new EntityId(nameof(TrackedItem), TrackedItemId), nameof(TrackedItem.SetLocation), location);
+                Entity.Current.SignalEntity(new EntityId(nameof(TrackedItem), TrackedItemId), nameof(TrackedItem.SetLocation), location);
             }
         }
 
