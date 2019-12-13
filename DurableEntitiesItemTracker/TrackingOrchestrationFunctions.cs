@@ -7,6 +7,7 @@ namespace DurableEntitiesItemTracker
 {
     public static class TrackingOrchestrationFunctions
     {
+        [Deterministic]
         public static async Task CreateOrder(
             string orderId, int quantity,
             IDurableOrchestrationContext context)
@@ -17,6 +18,7 @@ namespace DurableEntitiesItemTracker
             await orderProxy.SetQuantity(quantity);
         }
 
+        [Deterministic]
         public static async Task ApplyTrackingConfiguration(
             string orderId, string trackerId,
             IDurableOrchestrationContext context)
@@ -27,6 +29,7 @@ namespace DurableEntitiesItemTracker
             await AssignTrackerToTrackedItem(trackerId, trackedItemId, context);
         }
 
+        [Deterministic]
         private static async Task<string> CreateTrackedItemForOrder(
             string orderId,
             IDurableOrchestrationContext context)
@@ -54,6 +57,7 @@ namespace DurableEntitiesItemTracker
             }
         }
 
+        [Deterministic]
         private static async Task AssignTrackerToTrackedItem(
             string trackerId, string trackedItemId,
             IDurableOrchestrationContext context)

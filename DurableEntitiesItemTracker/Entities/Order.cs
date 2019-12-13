@@ -8,12 +8,16 @@ namespace DurableEntitiesItemTracker.Entities
 {
     public interface IOrder
     {
+        [Deterministic]
         Task<int?> GetQuantity();
 
+        [Deterministic]
         Task SetQuantity(int quantity);
 
+        [Deterministic]
         Task<int> GetTrackedItemCount();
 
+        [Deterministic]
         Task AddTrackedItem(string trackedItemId);
     }
 

@@ -144,6 +144,7 @@ namespace DurableEntitiesItemTracker
         // To invoke this, issue a GET to http://localhost:7071/api/Scenario4
 
         [FunctionName("Scenario4")]
+        [Deterministic]
         public static async Task Scenario4EntryPoint(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
             [DurableClient] IDurableOrchestrationClient orchestrationClient)
@@ -152,6 +153,7 @@ namespace DurableEntitiesItemTracker
         }
 
         [FunctionName(nameof(Scenario4Orchestrator))]
+        [Deterministic]
         public static async Task Scenario4Orchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
@@ -180,6 +182,7 @@ namespace DurableEntitiesItemTracker
         #endregion
 
         #region Helpers
+        [Deterministic]
         private static async Task IgnoreTaskException(Task task)
         {
             try

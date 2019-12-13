@@ -9,8 +9,10 @@ namespace DurableEntitiesItemTracker.Entities
 {
     public interface ITracker
     {
+        [Deterministic]
         Task<string> GetTrackedItemId();
 
+        [Deterministic]
         Task SetTrackedItemId(string trackedItemId);
     }
 
