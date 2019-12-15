@@ -23,6 +23,8 @@ The solution is comprised of three main parts:
 
 ## Running the sample
 
-To see how this sample works, try running the solution and then perform an HTTP GET against the four sample scenarios listed in the `SampleScenarios.cs` file. For example, try performing a GET against `http://localhost:7071/api/Scenario1`.
+To see how this sample works, try running the solution and then perform an HTTP `GET` against the four sample scenarios listed in the `SampleScenarios.cs` file. For example, try performing a GET against `http://localhost:7071/api/Scenario1`.
+
+The location of a tracker can be set by performing an HTTP `POST` against the `UpdateTrackerLocation` function. For example, this can be done using the URL `http://localhost:7071/api/UpdateTrackerLocation`.
 
 You can use [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) to observe the entities' and orchestrations' state from your local emulator.
